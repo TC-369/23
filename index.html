@@ -1,4 +1,16 @@
 <!DOCTYPE html>
+<div class="titulo-editable">
+  <span id="titulo-malla" onclick="editarTitulo()" style="cursor:pointer;">Malla Curricular Mejorada</span>
+  <input id="titulo-input" style="display:none;" maxlength="80">
+</div>
+<div class="bg-controls">
+  <label>Imagen de fondo:</label>
+  <input type="file" id="bg-file" accept="image/*">
+  <span>ó URL:</span>
+  <input type="text" id="bg-url" placeholder="https://...jpg">
+  <button onclick="aplicarFondo()">Aplicar</button>
+  <button onclick="quitarFondo()">Sin fondo</button>
+</div>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
