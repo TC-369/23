@@ -1,16 +1,4 @@
 <!DOCTYPE html>
-<div class="titulo-editable">
-  <span id="titulo-malla" onclick="editarTitulo()" style="cursor:pointer;">Malla Curricular Mejorada</span>
-  <input id="titulo-input" style="display:none;" maxlength="80">
-</div>
-<div class="bg-controls">
-  <label>Imagen de fondo:</label>
-  <input type="file" id="bg-file" accept="image/*">
-  <span>ó URL:</span>
-  <input type="text" id="bg-url" placeholder="https://...jpg">
-  <button onclick="aplicarFondo()">Aplicar</button>
-  <button onclick="quitarFondo()">Sin fondo</button>
-</div>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -20,7 +8,60 @@
       background: #f5f5f5;
       font-family: Arial, sans-serif;
       color: #111;
+      transition: background-image 0.5s;
+      background-size: cover;
+      background-position: center;
     }
+    .titulo-editable {
+      text-align: center;
+      font-size: 2em;
+      font-weight: bold;
+      margin: 22px 0 18px 0;
+      position: relative;
+      color: #222;
+    }
+    .titulo-editable input {
+      font-size: 1.15em;
+      font-weight: bold;
+      text-align: center;
+      border: none;
+      border-bottom: 1.5px solid #888;
+      outline: none;
+      background: #fff6;
+      margin-bottom: 6px;
+      padding: 4px 2px;
+      width: 70vw;
+      max-width: 600px;
+    }
+    .bg-controls {
+      margin: 0 auto 18px auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      align-items: center;
+    }
+    .bg-controls label { font-weight: bold; }
+    .bg-controls input[type="text"] {
+      width: 280px;
+      max-width: 55vw;
+      padding: 4px;
+      border-radius: 5px;
+      border: 1px solid #888;
+    }
+    .bg-controls input[type="file"] {
+      border: none;
+    }
+    .bg-controls button {
+      background: #fff;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .bg-controls button:hover { background: #eee; }
     .acciones-malla {
       margin: 15px 0 10px 0;
       display: flex;
@@ -251,7 +292,18 @@
   </style>
 </head>
 <body>
-  <h1 style="text-align:center; color:#111;">Malla Curricular Mejorada</h1>
+  <div class="titulo-editable">
+    <span id="titulo-malla" onclick="editarTitulo()" style="cursor:pointer;">Malla Curricular Mejorada</span>
+    <input id="titulo-input" style="display:none;" maxlength="80">
+  </div>
+  <div class="bg-controls">
+    <label>Imagen de fondo:</label>
+    <input type="file" id="bg-file" accept="image/*">
+    <span>ó URL:</span>
+    <input type="text" id="bg-url" placeholder="https://...jpg">
+    <button onclick="aplicarFondo()">Aplicar</button>
+    <button onclick="quitarFondo()">Sin fondo</button>
+  </div>
   <div style="max-width:1200px;margin:auto;">
     <div class="acciones-malla">
       <input type="button" value="Agregar Año" onclick="agregarAnio()">
@@ -306,7 +358,6 @@
     };
     let anios = ["Año 1","Año 2","Año 3","Año 4","Año 5","Año 6"];
     let materias = [
-      // año, código, nombre, créditos, categoría, correlativas (array de códigos), imagen de fondo (url)
       [1, "IVI1131", "Programación", 5, "Básica", [], ""],
       [1, "QUI010", "Química y Sociedad", 5, "Básica", [], ""],
       [2, "MAT035", "Probabilidad y Estadística", 7, "Matemática", ["MAT021"], ""],
@@ -322,10 +373,38 @@
     ];
     let aprobadas = {};
 
+    // --- LOCALSTORAGE ---
+    function guardarEstado() {
+      localStorage.setItem('malla_materias', JSON.stringify(materias));
+      localStorage.setItem('malla_titulo', document.getElementById('titulo-malla').textContent);
+      localStorage.setItem('malla_bg_url', document.body.style.backgroundImage);
+      localStorage.setItem('malla_anios', JSON.stringify(anios));
+      localStorage.setItem('malla_aprobadas', JSON.stringify(aprobadas));
+      localStorage.setItem('malla_categorias', JSON.stringify(categorias));
+    }
+    function cargarEstado() {
+      let mallas = localStorage.getItem('malla_materias');
+      if (mallas) materias = JSON.parse(mallas);
+      let titulo = localStorage.getItem('malla_titulo');
+      if (titulo) document.getElementById('titulo-malla').textContent = titulo;
+      let fondo = localStorage.getItem('malla_bg_url');
+      if (fondo) document.body.style.backgroundImage = fondo;
+      let aniosLS = localStorage.getItem('malla_anios');
+      if (aniosLS) anios = JSON.parse(aniosLS);
+      let aprobadasLS = localStorage.getItem('malla_aprobadas');
+      if (aprobadasLS) aprobadas = JSON.parse(aprobadasLS);
+      let catsLS = localStorage.getItem('malla_categorias');
+      if (catsLS) categorias = JSON.parse(catsLS);
+      renderMalla();
+    }
+    function guardarYActualizar() {
+      guardarEstado();
+      renderMalla();
+    }
+
     // --- MALLA ---
     function renderMalla() {
       const malla = document.getElementById('malla');
-      // Columnas = años
       malla.innerHTML = "";
       malla.style.gridTemplateColumns = `repeat(${anios.length}, 1fr)`;
       // Encabezado por año
@@ -335,11 +414,9 @@
         div.textContent = anios[a];
         malla.appendChild(div);
       }
-      // Materias por año (máx 10)
       let maxMaterias = 10;
       for (let fila = 0; fila < maxMaterias; fila++) {
         for (let a = 0; a < anios.length; a++) {
-          // Materias de este año, en el orden que están
           let mats = materias.filter(m => m[0] === (a+1));
           let mat = mats[fila];
           if (mat) {
@@ -372,7 +449,6 @@
               </label>
               <div class="tooltip-correlativas">${correlTip}</div>
             `;
-            // Imagen de fondo (mejor blending)
             if (mat[6]) {
               let img = document.createElement("img");
               img.className = "bg-imagen";
@@ -382,7 +458,6 @@
             }
             malla.appendChild(div);
           } else {
-            // Botón para agregar materia
             const div = document.createElement('div');
             div.className = "agregar-mat-btn";
             div.innerHTML = '<span title="Agregar materia" onclick="abrirMateriaEditor(null,'+(a+1)+')">+</span>';
@@ -400,11 +475,11 @@
     }
     function toggleAprobada(codigo) {
       aprobadas[codigo] = !aprobadas[codigo];
-      renderMalla();
+      guardarYActualizar();
     }
     function resetAprobadas() {
       aprobadas = {};
-      renderMalla();
+      guardarYActualizar();
     }
 
     // --- MODAL DE MATERIAS ---
@@ -464,7 +539,6 @@
         correlativas,
         document.getElementById('mat-bgimg').value.trim()
       ];
-      // máximo 10 materias por año
       let matsEnAnio = materias.filter(m=>m[0]===anio);
       if (idx === "" && matsEnAnio.length >= 10) {
         alert("No puedes agregar más de 10 materias en este año.");
@@ -476,7 +550,7 @@
         materias.push(mat);
       }
       cerrarMateriaEditor();
-      renderMalla();
+      guardarYActualizar();
     }
     function borrarMateria(){
       let idx = document.getElementById('materia-idx').value;
@@ -484,11 +558,10 @@
         let cod = materias[idx][1];
         materias.splice(idx,1);
         delete aprobadas[cod];
-        renderMalla();
+        guardarYActualizar();
         cerrarMateriaEditor();
       }
     }
-    // Agregar materia general (elegir año)
     function agregarMateriaGeneral() {
       let anio = prompt("¿A qué año quieres agregar la materia? (1-"+anios.length+"):");
       anio = parseInt(anio);
@@ -512,16 +585,14 @@
         wrapper.style.marginBottom = "10px";
         wrapper.style.display = "flex";
         wrapper.style.alignItems = "center";
-        // Color input
         const colorInput = document.createElement('input');
         colorInput.type = "color";
         colorInput.value = categorias[cat];
         colorInput.style.marginRight = "10px";
         colorInput.oninput = (e) => {
           categorias[cat] = e.target.value;
-          renderMalla();
+          guardarYActualizar();
         };
-        // Nombre input
         const nameInput = document.createElement('input');
         nameInput.type = "text";
         nameInput.value = cat;
@@ -533,10 +604,9 @@
             delete categorias[cat];
             materias.forEach(m => { if (m[4] === cat) m[4] = nuevo; });
             renderCategoriasEditor();
-            renderMalla();
+            guardarYActualizar();
           }
         };
-        // Botón eliminar
         const deleteBtn = document.createElement('button');
         deleteBtn.textContent = "Eliminar";
         deleteBtn.style.marginLeft = "10px";
@@ -544,7 +614,7 @@
           if (confirm("¿Eliminar la categoría '" + cat + "'? Las materias que la usen quedarán grises.")) {
             delete categorias[cat];
             renderCategoriasEditor();
-            renderMalla();
+            guardarYActualizar();
           }
         };
         wrapper.appendChild(colorInput);
@@ -552,7 +622,6 @@
         wrapper.appendChild(deleteBtn);
         container.appendChild(wrapper);
       });
-      // Añadir nueva categoría
       const addBtn = document.createElement('button');
       addBtn.textContent = "Añadir nueva categoría";
       addBtn.onclick = () => {
@@ -561,27 +630,66 @@
           const color = prompt("Color en formato HEX (ej: #aabbcc):", "#ffffff");
           categorias[nombre] = color || "#ffffff";
           renderCategoriasEditor();
-          renderMalla();
+          guardarYActualizar();
         }
       };
       container.appendChild(addBtn);
-      // Botón cerrar
       const closeBtn = document.createElement('button');
       closeBtn.textContent = "Cerrar";
       closeBtn.style.marginLeft = "20px";
       closeBtn.onclick = cerrarCategoriaEditor;
       container.appendChild(closeBtn);
     }
-    // --- AGREGAR AÑO ---
     function agregarAnio() {
       const nombre = prompt("Nombre del nuevo año:", "Año " + (anios.length + 1));
       if (nombre) {
         anios.push(nombre);
-        renderMalla();
+        guardarYActualizar();
       }
     }
-    // --- INICIO ---
-    renderMalla();
+
+    // TITULO editable
+    function editarTitulo() {
+      document.getElementById('titulo-malla').style.display = 'none';
+      var input = document.getElementById('titulo-input');
+      input.value = document.getElementById('titulo-malla').textContent;
+      input.style.display = '';
+      input.focus();
+    }
+    document.getElementById('titulo-input').addEventListener('blur', function() {
+      document.getElementById('titulo-malla').textContent = this.value || "Malla Curricular";
+      this.style.display = 'none';
+      document.getElementById('titulo-malla').style.display = '';
+      guardarYActualizar();
+    });
+    document.getElementById('titulo-input').addEventListener('keydown', function(e){
+      if(e.key==="Enter"||e.key==="Escape") this.blur();
+    });
+
+    // FONDO: URL o archivo
+    function aplicarFondo() {
+      let url = document.getElementById('bg-url').value.trim();
+      let file = document.getElementById('bg-file').files[0];
+      if (file) {
+        let reader = new FileReader();
+        reader.onload = function(e) {
+          document.body.style.backgroundImage = `url('${e.target.result}')`;
+          localStorage.setItem('malla_bg_url', `url('${e.target.result}')`);
+        };
+        reader.readAsDataURL(file);
+      } else if (url) {
+        document.body.style.backgroundImage = `url('${url}')`;
+        localStorage.setItem('malla_bg_url', `url('${url}')`);
+      }
+    }
+    function quitarFondo() {
+      document.body.style.backgroundImage = '';
+      document.getElementById('bg-url').value = '';
+      document.getElementById('bg-file').value = '';
+      localStorage.removeItem('malla_bg_url');
+    }
+
+    window.onload = cargarEstado;
     window.onclick = function(e){
       if(e.target.classList && e.target.classList.contains("editor-modal")){
         cerrarMateriaEditor();
