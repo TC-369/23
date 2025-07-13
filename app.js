@@ -2,6 +2,18 @@
 const estados = ["pendiente", "cursando", "aprobada"];
 let malla = {};
 
+// Cargar categorías
+let categorias = {};
+fetch("categorias.json")
+  .then(res => res.json())
+  .then(data => {
+    data.forEach(cat => {
+        categorias[cat.id] = cat;
+    });
+    loadMalla();
+    renderMalla();
+  });
+
 function saveMalla() {
     localStorage.setItem("malla", JSON.stringify(malla));
 }
@@ -17,9 +29,32 @@ function loadMalla() {
     }
 }
 
+function getCategoriaSelect(subject) {
+    let select = '<select onchange="setCategoria(' + subject.id + ', this.value)">';
+    for (let id in categorias) {
+        const selected = subject.categoria == id ? 'selected' : '';
+        select += `<option value="${id}" ${selected}>${categorias[id].nombre}</option>`;
+    }
+    select += '</select>';
+    return select;
+}
+
+function setCategoria(id, catId) {
+    for (const nivel in malla) {
+        const materia = malla[nivel].find(m => m.id == id);
+        if (materia) {
+            materia.categoria = parseInt(catId);
+            saveMalla();
+            renderMalla();
+        }
+    }
+}
+
 function createSubject(subject) {
     const div = document.createElement("div");
     div.className = `subject ${subject.estado}`;
+    const color = categorias[subject.categoria]?.color || "#aaa";
+    div.style.borderLeft = `8px solid ${color}`;
     div.innerHTML = `
         <div class="subject-name" contenteditable="true">${subject.nombre}</div>
         <div class="subject-actions">
@@ -29,6 +64,7 @@ function createSubject(subject) {
         <div class="subject-details" id="details-${subject.id}">
             <p><strong>Correlativas (para cursar):</strong> ${subject.correlativasCursada.join(", ") || "Ninguna"}</p>
             <p><strong>Correlativas (para rendir):</strong> ${subject.correlativasAprobada.join(", ") || "Ninguna"}</p>
+            <p><strong>Categoría:</strong> ${getCategoriaSelect(subject)}</p>
         </div>
     `;
     div.id = `subject-${subject.id}`;
@@ -63,6 +99,7 @@ function renderMalla() {
                 correlativasCursada: [],
                 correlativasAprobada: [],
                 estado: "pendiente",
+                categoria: 1
             });
             saveMalla();
             renderMalla();
@@ -103,6 +140,3 @@ function resetMalla() {
         location.reload();
     }
 }
-
-loadMalla();
-renderMalla();
