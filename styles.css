@@ -1,8 +1,8 @@
 
 body {
-    font-family: Arial, sans-serif;
     background: #121212;
     color: #fff;
+    font-family: Arial, sans-serif;
     padding: 20px;
 }
 h1 {
@@ -13,38 +13,36 @@ h1 {
     margin-bottom: 20px;
 }
 button {
-    margin: 5px;
-    padding: 10px 15px;
-    background: #1e88e5;
+    background-color: #1e88e5;
     color: white;
     border: none;
+    padding: 10px;
     border-radius: 5px;
+    margin: 5px;
     cursor: pointer;
 }
-button:hover {
-    background: #1565c0;
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
 }
-.year {
-    border: 2px solid #444;
-    margin-bottom: 15px;
-    padding: 10px;
-    border-radius: 10px;
+.column {
     background: #1e1e1e;
+    border-radius: 10px;
+    padding: 10px;
 }
-.year-title {
-    font-size: 20px;
+.column-title {
+    text-align: center;
+    font-weight: bold;
     margin-bottom: 10px;
 }
 .subject {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     background: #2e2e2e;
-    padding: 10px;
-    border-radius: 5px;
     margin: 5px 0;
+    padding: 10px;
+    border-left: 8px solid #888;
+    border-radius: 5px;
     cursor: pointer;
-    border-left: 8px solid #aaa;
 }
 .subject.pendiente { background-color: #b71c1c; }
 .subject.cursando { background-color: #f9a825; }
@@ -52,17 +50,10 @@ button:hover {
 .subject-details {
     display: none;
     background: #424242;
-    margin-top: 5px;
-    padding: 10px;
+    padding: 5px;
     border-radius: 5px;
+    margin-top: 5px;
 }
 .subject.expanded .subject-details {
     display: block;
-}
-.subject-name {
-    flex-grow: 1;
-}
-.subject-actions {
-    display: flex;
-    gap: 5px;
 }

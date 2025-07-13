@@ -10,7 +10,7 @@ const materias = [
   },
   {
     id: 2,
-    nombre: "Álgebra y Geometría Analítica",
+    nombre: "Álgebra",
     nivel: 1,
     correlativasCursada: [],
     correlativasAprobada: [],
@@ -20,8 +20,8 @@ const materias = [
     id: 8,
     nombre: "Informática II",
     nivel: 2,
-    correlativasCursada: [1, 2, 3],
-    correlativasAprobada: [],
+    correlativasCursada: [1],
+    correlativasAprobada: [2],
     categoria: 1
   }
 ];

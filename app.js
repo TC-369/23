@@ -1,15 +1,13 @@
 
 const estados = ["pendiente", "cursando", "aprobada"];
 let malla = {};
-
-// Cargar categorías
 let categorias = {};
+
+// Cargar categorías y malla
 fetch("categorias.json")
   .then(res => res.json())
   .then(data => {
-    data.forEach(cat => {
-        categorias[cat.id] = cat;
-    });
+    data.forEach(cat => categorias[cat.id] = cat);
     loadMalla();
     renderMalla();
   });
@@ -17,7 +15,6 @@ fetch("categorias.json")
 function saveMalla() {
     localStorage.setItem("malla", JSON.stringify(malla));
 }
-
 function loadMalla() {
     const data = localStorage.getItem("malla");
     if (data) malla = JSON.parse(data);
@@ -28,7 +25,6 @@ function loadMalla() {
         });
     }
 }
-
 function getCategoriaSelect(subject) {
     let select = '<select onchange="setCategoria(' + subject.id + ', this.value)">';
     for (let id in categorias) {
@@ -38,7 +34,6 @@ function getCategoriaSelect(subject) {
     select += '</select>';
     return select;
 }
-
 function setCategoria(id, catId) {
     for (const nivel in malla) {
         const materia = malla[nivel].find(m => m.id == id);
@@ -49,47 +44,44 @@ function setCategoria(id, catId) {
         }
     }
 }
-
 function createSubject(subject) {
     const div = document.createElement("div");
     div.className = `subject ${subject.estado}`;
-    const color = categorias[subject.categoria]?.color || "#aaa";
+    const color = categorias[subject.categoria]?.color || "#888";
     div.style.borderLeft = `8px solid ${color}`;
     div.innerHTML = `
-        <div class="subject-name" contenteditable="true">${subject.nombre}</div>
+        <div class="subject-name">${subject.nombre}</div>
         <div class="subject-actions">
             <button onclick="changeState(${subject.id})">🔄</button>
             <button onclick="toggleDetails(${subject.id})">🔽</button>
         </div>
         <div class="subject-details" id="details-${subject.id}">
-            <p><strong>Correlativas (para cursar):</strong> ${subject.correlativasCursada.join(", ") || "Ninguna"}</p>
-            <p><strong>Correlativas (para rendir):</strong> ${subject.correlativasAprobada.join(", ") || "Ninguna"}</p>
+            <p><strong>Cursada:</strong> ${subject.correlativasCursada.join(", ") || "Ninguna"}</p>
+            <p><strong>Aprobada:</strong> ${subject.correlativasAprobada.join(", ") || "Ninguna"}</p>
             <p><strong>Categoría:</strong> ${getCategoriaSelect(subject)}</p>
         </div>
     `;
-    div.id = `subject-${subject.id}`;
     div.onclick = (e) => e.stopPropagation();
     return div;
 }
-
 function renderMalla() {
     const contenedor = document.getElementById("malla");
     contenedor.innerHTML = "";
     Object.keys(malla).sort((a, b) => a - b).forEach(nivel => {
-        const yearDiv = document.createElement("div");
-        yearDiv.className = "year";
+        const col = document.createElement("div");
+        col.className = "column";
         const title = document.createElement("div");
-        title.className = "year-title";
+        title.className = "column-title";
         title.textContent = `Año ${nivel}`;
-        yearDiv.appendChild(title);
+        col.appendChild(title);
 
         malla[nivel].forEach(subject => {
             const subj = createSubject(subject);
-            yearDiv.appendChild(subj);
+            col.appendChild(subj);
         });
 
         const addBtn = document.createElement("button");
-        addBtn.textContent = "➕ Agregar Materia";
+        addBtn.textContent = "➕ Materia";
         addBtn.onclick = () => {
             const newId = Date.now();
             malla[nivel].push({
@@ -104,11 +96,10 @@ function renderMalla() {
             saveMalla();
             renderMalla();
         };
-        yearDiv.appendChild(addBtn);
-        contenedor.appendChild(yearDiv);
+        col.appendChild(addBtn);
+        contenedor.appendChild(col);
     });
 }
-
 function changeState(id) {
     for (const nivel in malla) {
         const materia = malla[nivel].find(m => m.id === id);
@@ -121,19 +112,16 @@ function changeState(id) {
         }
     }
 }
-
 function toggleDetails(id) {
-    const el = document.getElementById(`subject-${id}`);
-    el.classList.toggle("expanded");
+    const el = document.getElementById(`details-${id}`);
+    el.parentElement.classList.toggle("expanded");
 }
-
 function addYear() {
     const newNivel = Math.max(...Object.keys(malla).map(n => parseInt(n))) + 1;
     malla[newNivel] = [];
     saveMalla();
     renderMalla();
 }
-
 function resetMalla() {
     if (confirm("¿Seguro que querés borrar la malla y comenzar de cero?")) {
         localStorage.removeItem("malla");
