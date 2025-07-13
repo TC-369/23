@@ -54,3 +54,4 @@ function quitarFondo() {
   document.getElementById('bg-file').value = '';
   localStorage.removeItem('malla_bg_url');
 }
+window.onload = cargarEstado;
