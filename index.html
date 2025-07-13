@@ -498,6 +498,7 @@
             div.innerHTML = `
               <div class="acciones">
                 <button title="Editar" onclick="abrirMateriaEditor(${materias.indexOf(mat)});event.stopPropagation();">✏️</button>
+                <button title="Borrar" onclick="borrarMateriaDirecto(${materias.indexOf(mat)});event.stopPropagation();">🗑️</button>
               </div>
               <span class="codigo">${mat[1]}</span>
               <div class="nombre">${mat[2]}</div>
@@ -525,6 +526,16 @@
             malla.appendChild(div);
           }
         }
+      }
+    }
+
+    // --- BORRAR MATERIA DIRECTO ---
+    function borrarMateriaDirecto(idx) {
+      if (confirm("¿Eliminar esta materia?")) {
+        let cod = materias[idx][1];
+        materias.splice(idx,1);
+        delete aprobadas[cod];
+        guardarYActualizar();
       }
     }
 
