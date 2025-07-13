@@ -27,3 +27,30 @@ function guardarYActualizar() {
 }
 
 // Ejemplo: llama guardarYActualizar() después de editar, agregar o borrar materia/título/fondo
+function guardarMateria(e){
+  e.preventDefault();
+  // ... (tu código de guardar)
+  cerrarMateriaEditor();
+  guardarYActualizar();
+}
+function aplicarFondo() {
+  let url = document.getElementById('bg-url').value.trim();
+  let file = document.getElementById('bg-file').files[0];
+  if (file) {
+    let reader = new FileReader();
+    reader.onload = function(e) {
+      document.body.style.backgroundImage = `url('${e.target.result}')`;
+      localStorage.setItem('malla_bg_url', `url('${e.target.result}')`);
+    };
+    reader.readAsDataURL(file);
+  } else if (url) {
+    document.body.style.backgroundImage = `url('${url}')`;
+    localStorage.setItem('malla_bg_url', `url('${url}')`);
+  }
+}
+function quitarFondo() {
+  document.body.style.backgroundImage = '';
+  document.getElementById('bg-url').value = '';
+  document.getElementById('bg-file').value = '';
+  localStorage.removeItem('malla_bg_url');
+}
