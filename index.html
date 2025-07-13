@@ -350,6 +350,22 @@
       .malla { min-width: 0; max-width: 100vw; grid-template-columns: repeat(2, 1fr);}
       .anio-header { font-size: 1em; }
     }
+    .borrar-todo-btn {
+      background: #ff4c4c;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 9px 22px;
+      font-size: 1.05em;
+      font-weight: bold;
+      cursor: pointer;
+      margin-left: 12px;
+      box-shadow: 0 2px 12px #0004;
+      transition: background 0.2s;
+    }
+    .borrar-todo-btn:hover {
+      background: #ff0000;
+    }
   </style>
 </head>
 <body>
@@ -384,6 +400,7 @@
       <input type="button" value="Agregar Materia" onclick="agregarMateriaGeneral()">
       <input type="button" value="Ver/Editar Categorías" onclick="abrirCategoriaEditor()">
       <input type="button" value="Resetear Estado" onclick="resetAprobadas()">
+      <button class="borrar-todo-btn" onclick="borrarTodaLaMalla()">🗑️ Borrar toda la malla</button>
     </div>
     <div class="malla" id="malla"></div>
   </div>
@@ -535,6 +552,15 @@
         let cod = materias[idx][1];
         materias.splice(idx,1);
         delete aprobadas[cod];
+        guardarYActualizar();
+      }
+    }
+
+    // --- BORRAR TODA LA MALLA ---
+    function borrarTodaLaMalla() {
+      if (confirm("¿Seguro que querés borrar TODA la malla de materias? ¡Esto no se puede deshacer!")) {
+        materias = [];
+        aprobadas = {};
         guardarYActualizar();
       }
     }
