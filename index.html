@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Malla Curricular Editable Completa</title>
+  <title>Malla Curricular con Correlatividades</title>
   <style>
     body {
       background: #f5f5f5;
@@ -16,7 +16,7 @@
       max-width: 1200px;
       min-width: 320px;
     }
-    .anio, .periodo {
+    .anio {
       background: #cfcfcf;
       text-align: center;
       padding: 12px 0 8px 0;
@@ -24,7 +24,7 @@
       font-weight: bold;
       border-radius: 7px 7px 0 0;
       color: #111;
-      min-width: 100px;
+      min-width: 120px;
       min-height: 30px;
     }
     .periodo {
@@ -32,13 +32,16 @@
       border-bottom: 1px solid #bbb;
       border-radius: 0;
       font-size: 1em;
+      text-align: center;
       padding: 8px 0 6px 0;
+      color: #111;
+      min-height: 28px;
     }
     .materia {
       border-radius: 10px;
       padding: 10px 8px 8px 8px;
       margin-bottom: 3px;
-      min-height: 90px;
+      min-height: 100px;
       position: relative;
       display: flex;
       flex-direction: column;
@@ -48,8 +51,32 @@
       border: 2px solid #ddd;
       box-shadow: 0 2px 8px #0001;
       transition: background 0.3s;
+      opacity: 1;
       cursor: pointer;
     }
+    .materia.inhabilitada {
+      opacity: 0.4;
+      filter: grayscale(0.7);
+      pointer-events: none;
+    }
+    .materia .acciones {
+      position: absolute;
+      top: 2px;
+      right: 5px;
+      z-index: 2;
+      display: flex;
+      gap: 4px;
+    }
+    .materia .acciones button {
+      background: #fff;
+      border: 1px solid #bbb;
+      border-radius: 3px;
+      font-size: 0.8em;
+      padding: 2px 6px;
+      cursor: pointer;
+      opacity: 0.7;
+    }
+    .materia .acciones button:hover { opacity: 1; background: #eee;}
     .codigo {
       font-size: 0.85em;
       font-weight: bold;
@@ -71,6 +98,12 @@
       justify-content: center;
       border: 1px solid #bdbdbd;
       box-shadow: 0 1px 3px #0001;
+    }
+    .checkbox-aprobada {
+      position: absolute;
+      left: 8px;
+      bottom: 8px;
+      font-size: 1.2em;
     }
     .materia span {
       display: block;
@@ -107,7 +140,7 @@
       overflow: auto;
     }
     .editor-content label { font-weight: bold; }
-    .editor-content input, .editor-content select {
+    .editor-content input, .editor-content select, .editor-content textarea {
       font-size: 1em;
       margin-bottom: 12px;
       width: 100%;
@@ -118,14 +151,6 @@
     .editor-content .botonera {
       display: flex; gap: 10px; justify-content: flex-end;
       margin-top: 10px;
-    }
-    .color-option {
-      display: inline-block;
-      width: 22px; height: 22px;
-      border-radius: 50%;
-      margin-right: 6px;
-      border: 1px solid #bbb;
-      vertical-align: middle;
     }
     .acciones-malla {
       margin: 15px 0 10px 0;
@@ -142,14 +167,14 @@
   </style>
 </head>
 <body>
-  <h1 style="text-align:center; color:#111;">Malla Curricular Editable Completa</h1>
+  <h1 style="text-align:center; color:#111;">Malla Curricular Editable con Correlatividades</h1>
   <div style="max-width:1200px;margin:auto;">
-
     <div class="acciones-malla">
       <input type="button" value="Agregar Año" onclick="agregarAnio()">
       <input type="button" value="Agregar Periodo" onclick="agregarPeriodo()">
       <input type="button" value="Agregar Materia" onclick="abrirMateriaEditor()">
       <input type="button" value="Ver/Editar Categorías" onclick="abrirCategoriaEditor()">
+      <input type="button" value="Resetear Estado" onclick="resetAprobadas()">
     </div>
     <div class="malla" id="malla"></div>
   </div>
@@ -171,6 +196,8 @@
         <select id="mat-periodo"></select>
         <label>Categoría:</label>
         <select id="mat-categoria"></select>
+        <label>Correlativas (códigos separados por coma):</label>
+        <input type="text" id="mat-correlativas" placeholder="Ej: MAT021,FIS100">
         <div class="botonera">
           <button type="submit">Guardar</button>
           <button type="button" onclick="cerrarMateriaEditor()">Cancelar</button>
@@ -200,20 +227,22 @@
     let anios = ["Año 1","Año 2","Año 3","Año 4","Año 5","Año 6"];
     let periodos = ["I","III","V","VII","IX","XI"];
     let materias = [
-      // año, periodo, código, nombre, créditos, categoría
-      [1, 1, "IVI1131", "Programación", 5, "Básica"],
-      [1, 1, "QUI010", "Química y Sociedad", 5, "Básica"],
-      [2, 3, "MAT035", "Probabilidad y Estadística", 7, "Matemática"],
-      [3, 5, "MEC220", "Mecánica de Fluidos Avanzadas", 5, "Ingeniería"],
-      [4, 7, "MEC373", "Automatización y Neumática", 5, "Ingeniería"],
-      [5, 9, "MEC397", "Seminario de Titulación", 13, "Ingeniería"],
-      [1, 1, "MAT021", "Matemáticas I", 8, "Matemática"],
-      [1, 1, "MAT022", "Matemáticas II", 8, "Matemática"],
-      [2, 3, "FIS140", "Física General IV", 5, "Física"],
-      [3, 5, "MEC353", "Mecánica de Máquinas", 5, "Ingeniería"],
-      [4, 7, "MEC382", "Ingeniería del Mantenimiento", 5, "Ingeniería"],
-      [6, 11, "MEC5", "Electivo 5", 5, "Optativo"]
+      // año, periodo, código, nombre, créditos, categoría, correlativas (array de códigos)
+      [1, 1, "IVI1131", "Programación", 5, "Básica", []],
+      [1, 1, "QUI010", "Química y Sociedad", 5, "Básica", []],
+      [2, 3, "MAT035", "Probabilidad y Estadística", 7, "Matemática", ["MAT021"]],
+      [3, 5, "MEC220", "Mecánica de Fluidos Avanzadas", 5, "Ingeniería", ["MAT035"]],
+      [4, 7, "MEC373", "Automatización y Neumática", 5, "Ingeniería", ["MEC220"]],
+      [5, 9, "MEC397", "Seminario de Titulación", 13, "Ingeniería", ["MEC373"]],
+      [1, 1, "MAT021", "Matemáticas I", 8, "Matemática", []],
+      [1, 1, "MAT022", "Matemáticas II", 8, "Matemática", []],
+      [2, 3, "FIS140", "Física General IV", 5, "Física", ["QUI010"]],
+      [3, 5, "MEC353", "Mecánica de Máquinas", 5, "Ingeniería", ["MEC220"]],
+      [4, 7, "MEC382", "Ingeniería del Mantenimiento", 5, "Ingeniería", ["MEC373"]],
+      [6, 11, "MEC5", "Electivo 5", 5, "Optativo", []]
     ];
+    // Estado de materias aprobadas (por código)
+    let aprobadas = {};
 
     // --- MALLA ---
     function renderMalla() {
@@ -228,34 +257,36 @@
         div.textContent = anios[a];
         malla.appendChild(div);
       }
-      // Cabeceras periodo
+      // Celdas
       for (let p = 0; p < periodos.length; p++) {
         for (let a = 0; a < anios.length; a++) {
-          if (a === 0) {
-            const div = document.createElement('div');
-            div.className = 'periodo';
-            div.textContent = periodos[p];
-            div.style.gridColumn = `span ${anios.length}`;
-            malla.appendChild(div);
-            break;
-          }
-        }
-        // Materias fila por fila
-        for (let a = 0; a < anios.length; a++) {
-          // Puede haber más de una materia por celda
+          // Busca materias de este año y periodo
           let mats = materias.filter(m => m[0] === (a+1) && m[1] === (p+1));
           if (mats.length) {
-            // Si hay varias, renderiza todas apiladas
             mats.forEach((mat, idx) => {
               const div = document.createElement('div');
               div.className = 'materia';
               div.style.background = categorias[mat[5]] || "#e0e0e0";
+              // Determina si está habilitada
+              let habilitada = correlativasHabilitadas(mat);
+              if (!habilitada) div.classList.add("inhabilitada");
+              // Acciones (editar/eliminar)
               div.innerHTML = `
+                <div class="acciones">
+                  <button title="Editar" onclick="abrirMateriaEditor(${materias.indexOf(mat)});event.stopPropagation();">✏️</button>
+                </div>
                 <span class="codigo">${mat[2]}</span>
                 <span>${mat[3]}</span>
                 <span class="creditos">${mat[4]}</span>
+                <label class="checkbox-aprobada" title="Aprobar materia">
+                  <input type="checkbox" onchange="toggleAprobada('${mat[2]}')" ${aprobadas[mat[2]]?"checked":""}
+                    ${!habilitada?"disabled":""}>
+                  ✔
+                </label>
+                ${mat[6]&&mat[6].length?`<div style="font-size:0.8em;margin-top:5px;">
+                  Correlativas: <span style="color:#356;">${mat[6].join(", ")}</span>
+                </div>`:""}
               `;
-              div.onclick = () => abrirMateriaEditor(materias.indexOf(mat));
               malla.appendChild(div);
             });
           } else {
@@ -263,17 +294,33 @@
             const div = document.createElement('div');
             div.innerHTML = '<span style="color:#bbb;font-size:1.2em;cursor:pointer;" title="Agregar materia" onclick="abrirMateriaEditor(null,'+(a+1)+','+(p+1)+')">+</span>';
             div.style.textAlign = "center";
-            div.style.minHeight = "90px";
+            div.style.minHeight = "100px";
             malla.appendChild(div);
           }
         }
       }
     }
 
+    // --- CORRELATIVAS ---
+    function correlativasHabilitadas(mat) {
+      // Si la materia no tiene correlativas, está habilitada siempre
+      if (!mat[6] || !mat[6].length) return true;
+      // Si todas las correlativas están aprobadas
+      return mat[6].every(cod => aprobadas[cod]);
+    }
+
+    function toggleAprobada(codigo) {
+      aprobadas[codigo] = !aprobadas[codigo];
+      renderMalla();
+    }
+    function resetAprobadas() {
+      aprobadas = {};
+      renderMalla();
+    }
+
     // --- MODAL DE MATERIAS ---
     function abrirMateriaEditor(idx=null, anioSel=null, periodoSel=null) {
       document.getElementById('materia-modal').style.display = "";
-      // Actualiza selectores
       let sa = document.getElementById('mat-anio');
       let sp = document.getElementById('mat-periodo');
       sa.innerHTML = ""; sp.innerHTML = "";
@@ -287,7 +334,7 @@
         opt.value = i+1; opt.textContent = periodos[i];
         sp.appendChild(opt);
       }
-      // Categorias
+      // Categorías
       let sc = document.getElementById('mat-categoria');
       sc.innerHTML = "";
       Object.keys(categorias).forEach(cat=>{
@@ -305,6 +352,7 @@
         sa.value = m[0];
         sp.value = m[1];
         sc.value = m[5];
+        document.getElementById('mat-correlativas').value = m[6]?m[6].join(","):"";
         document.getElementById('btn-borrar-materia').style.display = "";
       } else {
         document.getElementById('materia-idx').value = "";
@@ -314,6 +362,7 @@
         sa.value = anioSel || 1;
         sp.value = periodoSel || 1;
         sc.value = Object.keys(categorias)[0];
+        document.getElementById('mat-correlativas').value = "";
         document.getElementById('btn-borrar-materia').style.display = "none";
       }
     }
@@ -323,13 +372,15 @@
     function guardarMateria(e){
       e.preventDefault();
       let idx = document.getElementById('materia-idx').value;
+      let correlativas = document.getElementById('mat-correlativas').value.split(",").map(s=>s.trim()).filter(Boolean);
       let mat = [
         parseInt(document.getElementById('mat-anio').value),
         parseInt(document.getElementById('mat-periodo').value),
         document.getElementById('mat-codigo').value.trim(),
         document.getElementById('mat-nombre').value.trim(),
         parseInt(document.getElementById('mat-creditos').value),
-        document.getElementById('mat-categoria').value
+        document.getElementById('mat-categoria').value,
+        correlativas
       ];
       if(idx!==""){
         materias[idx]=mat;
@@ -342,9 +393,11 @@
     function borrarMateria(){
       let idx = document.getElementById('materia-idx').value;
       if(confirm("¿Eliminar esta materia?")){
+        let cod = materias[idx][2];
         materias.splice(idx,1);
-        cerrarMateriaEditor();
+        delete aprobadas[cod];
         renderMalla();
+        cerrarMateriaEditor();
       }
     }
 
@@ -385,7 +438,6 @@
           if (nuevo && nuevo !== cat && !(nuevo in categorias)) {
             categorias[nuevo] = categorias[cat];
             delete categorias[cat];
-            // Cambia nombre en las materias
             materias.forEach(m => { if (m[5] === cat) m[5] = nuevo; });
             renderCategoriasEditor();
             renderMalla();
