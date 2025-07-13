@@ -8,9 +8,66 @@
       background: #f5f5f5;
       font-family: Arial, sans-serif;
       color: #111;
-      transition: background-image 0.5s;
+      margin: 0;
+      padding: 0;
       background-size: cover;
       background-position: center;
+      transition: background-image 0.5s;
+    }
+    #bienvenida {
+      position: fixed;
+      z-index: 9999;
+      left: 0; top: 0;
+      width: 100vw; height: 100vh;
+      background: #222;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 2.2em;
+      letter-spacing: 1px;
+      text-align: center;
+      transition: opacity 0.7s;
+    }
+    #bienvenida .gif-bg {
+      position: absolute;
+      width: 100vw; height: 100vh;
+      left: 0; top: 0;
+      object-fit: cover;
+      z-index: 0;
+      opacity: 0.55;
+      pointer-events: none;
+    }
+    #bienvenida .bienvenida-contenido {
+      position: relative;
+      z-index: 2;
+      background: #222c;
+      border-radius: 18px;
+      box-shadow: 0 4px 32px #000a;
+      padding: 30px 35px;
+      margin-bottom: 24px;
+      max-width: 90vw;
+    }
+    #bienvenida .iniciar-btn {
+      position: relative;
+      z-index: 2;
+      font-size: 1.3em;
+      padding: 15px 44px;
+      border-radius: 12px;
+      border: none;
+      background: #fff;
+      color: #222;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 2px 18px #0005;
+      transition: background 0.2s, color 0.2s, transform 0.15s;
+      margin-top: 18px;
+    }
+    #bienvenida .iniciar-btn:hover {
+      background: #ffd600;
+      color: #222;
+      transform: scale(1.05);
     }
     .titulo-editable {
       text-align: center;
@@ -192,19 +249,23 @@
     .materia .tooltip-correlativas {
       display: none;
       position: absolute;
-      left: 50%; top: 3px;
-      transform: translate(-50%, -110%);
-      background: #333e;
-      color: #fff;
-      font-size: 0.91em;
-      padding: 7px 15px;
-      border-radius: 8px;
-      z-index: 10;
+      left: 50%; top: 0;
+      transform: translate(-50%, -120%);
+      background: #fff;
+      color: #222;
+      font-size: 1.05em;
+      padding: 10px 18px;
+      border-radius: 10px;
+      box-shadow: 0 3px 18px #0003;
+      border: 1.5px solid #888;
+      z-index: 100;
       white-space: pre-line;
-      min-width: 160px;
+      min-width: 180px;
+      max-width: 300px;
       text-align: center;
       pointer-events: none;
-      font-weight: normal;
+      font-weight: bold;
+      opacity: 0.97;
     }
     .materia:hover .tooltip-correlativas {
       display: block;
@@ -292,6 +353,19 @@
   </style>
 </head>
 <body>
+  <!-- Pantalla de bienvenida -->
+  <div id="bienvenida">
+    <img 
+      class="gif-bg" 
+      src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZ3Y4M2d1eWF6MGJmYzVwY2U5dWQ4eGQxMmpnNGQyMGZscWw5d2h6MiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3oEjI6SIIHBdRxXI40/giphy.gif"
+      alt="Bienvenida GIF"
+    >
+    <div class="bienvenida-contenido">
+      <div>Bienvenido a mi humilde proyecto 👋</div>
+      <div style="font-size:0.6em; margin-top:16px;">(Malla curricular editable, con correlatividades y fondo a tu gusto)</div>
+    </div>
+    <button class="iniciar-btn" onclick="iniciarApp()">INICIAR</button>
+  </div>
   <div class="titulo-editable">
     <span id="titulo-malla" onclick="editarTitulo()" style="cursor:pointer;">Malla Curricular Mejorada</span>
     <input id="titulo-input" style="display:none;" maxlength="80">
@@ -313,7 +387,6 @@
     </div>
     <div class="malla" id="malla"></div>
   </div>
-  <!-- Modal para editar o agregar materias -->
   <div id="materia-modal" class="editor-modal" style="display:none;">
     <div class="editor-content">
       <form id="materia-form" onsubmit="guardarMateria(event)">
@@ -340,37 +413,25 @@
       </form>
     </div>
   </div>
-  <!-- Modal para editar categorías -->
   <div id="categoria-modal" class="editor-modal" style="display:none;">
     <div class="editor-content" id="categorias-editor"></div>
   </div>
   <script>
+    // --- BIENVENIDA ---
+    function iniciarApp() {
+      let bienvenida = document.getElementById('bienvenida');
+      bienvenida.style.opacity = "0";
+      setTimeout(() => {
+        bienvenida.style.display = "none";
+      }, 700);
+    }
+
     // --- ESTADO ---
     let categorias = {
-      "Básica": "#fff9c4",
-      "Matemática": "#ffe0b2",
-      "Física": "#b2ebf2",
-      "Ingeniería": "#c8e6c9",
-      "Optativo": "#f8bbd0",
-      "Humanista": "#d7ccc8",
-      "Idioma": "#d1c4e9",
-      "Otro": "#ffcdd2"
+      "Materias Básicas": "#fff9c4"
     };
     let anios = ["Año 1","Año 2","Año 3","Año 4","Año 5","Año 6"];
-    let materias = [
-      [1, "IVI1131", "Programación", 5, "Básica", [], ""],
-      [1, "QUI010", "Química y Sociedad", 5, "Básica", [], ""],
-      [2, "MAT035", "Probabilidad y Estadística", 7, "Matemática", ["MAT021"], ""],
-      [3, "MEC220", "Mecánica de Fluidos Avanzadas", 5, "Ingeniería", ["MAT035"], ""],
-      [4, "MEC373", "Automatización y Neumática", 5, "Ingeniería", ["MEC220"], ""],
-      [5, "MEC397", "Seminario de Titulación", 13, "Ingeniería", ["MEC373"], ""],
-      [1, "MAT021", "Matemáticas I", 8, "Matemática", [], ""],
-      [1, "MAT022", "Matemáticas II", 8, "Matemática", [], ""],
-      [2, "FIS140", "Física General IV", 5, "Física", ["QUI010"], ""],
-      [3, "MEC353", "Mecánica de Máquinas", 5, "Ingeniería", ["MEC220"], ""],
-      [4, "MEC382", "Ingeniería del Mantenimiento", 5, "Ingeniería", ["MEC373"], ""],
-      [6, "MEC5", "Electivo 5", 5, "Optativo", [], ""]
-    ];
+    let materias = [];
     let aprobadas = {};
 
     // --- LOCALSTORAGE ---
@@ -407,7 +468,6 @@
       const malla = document.getElementById('malla');
       malla.innerHTML = "";
       malla.style.gridTemplateColumns = `repeat(${anios.length}, 1fr)`;
-      // Encabezado por año
       for (let a = 0; a < anios.length; a++) {
         const div = document.createElement('div');
         div.className = 'anio-header';
