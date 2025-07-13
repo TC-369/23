@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Malla Curricular Editable</title>
+  <title>Malla Curricular Editable Completa</title>
   <style>
     body {
       background: #f5f5f5;
@@ -11,10 +11,10 @@
     }
     .malla {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
       grid-gap: 8px;
       margin: 30px auto;
       max-width: 1200px;
+      min-width: 320px;
     }
     .anio, .periodo {
       background: #cfcfcf;
@@ -24,6 +24,8 @@
       font-weight: bold;
       border-radius: 7px 7px 0 0;
       color: #111;
+      min-width: 100px;
+      min-height: 30px;
     }
     .periodo {
       background: #e5e5e5;
@@ -46,6 +48,7 @@
       border: 2px solid #ddd;
       box-shadow: 0 2px 8px #0001;
       transition: background 0.3s;
+      cursor: pointer;
     }
     .codigo {
       font-size: 0.85em;
@@ -72,32 +75,118 @@
     .materia span {
       display: block;
     }
-    /* Responsive */
-    @media (max-width: 900px) {
-      .malla { grid-template-columns: repeat(2, 1fr);}
+    .btn, button, input[type="button"] {
+      background: #fff;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+      padding: 4px 10px;
+      margin: 2px 0;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background .2s;
     }
-    /* Paleta de colores de ejemplo para el selector de categorías */
+    .btn:hover, button:hover, input[type="button"]:hover {
+      background: #eee;
+    }
+    .editor-modal {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: #0008;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000;
+    }
+    .editor-content {
+      background: #fff;
+      color: #111;
+      padding: 25px 18px;
+      border-radius: 10px;
+      min-width: 320px;
+      box-shadow: 0 0 14px #0004;
+      max-width: 90vw;
+      max-height: 95vh;
+      overflow: auto;
+    }
+    .editor-content label { font-weight: bold; }
+    .editor-content input, .editor-content select {
+      font-size: 1em;
+      margin-bottom: 12px;
+      width: 100%;
+      padding: 5px;
+      border-radius: 4px;
+      border: 1px solid #bbb;
+    }
+    .editor-content .botonera {
+      display: flex; gap: 10px; justify-content: flex-end;
+      margin-top: 10px;
+    }
     .color-option {
       display: inline-block;
-      width: 22px;
-      height: 22px;
+      width: 22px; height: 22px;
       border-radius: 50%;
       margin-right: 6px;
       border: 1px solid #bbb;
       vertical-align: middle;
     }
+    .acciones-malla {
+      margin: 15px 0 10px 0;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .acciones-malla input, .acciones-malla button {
+      min-width: 120px;
+    }
+    @media (max-width: 900px) {
+      .malla { min-width: 0; max-width: 100vw; grid-template-columns: repeat(2, 1fr);}
+    }
   </style>
 </head>
 <body>
-  <h1 style="text-align:center; color:#111;">Malla Curricular Editable</h1>
+  <h1 style="text-align:center; color:#111;">Malla Curricular Editable Completa</h1>
   <div style="max-width:1200px;margin:auto;">
-    <h3>Editar categorías:</h3>
-    <div id="categorias-editor"></div>
-    <hr>
+
+    <div class="acciones-malla">
+      <input type="button" value="Agregar Año" onclick="agregarAnio()">
+      <input type="button" value="Agregar Periodo" onclick="agregarPeriodo()">
+      <input type="button" value="Agregar Materia" onclick="abrirMateriaEditor()">
+      <input type="button" value="Ver/Editar Categorías" onclick="abrirCategoriaEditor()">
+    </div>
     <div class="malla" id="malla"></div>
   </div>
+
+  <!-- Modal para editar o agregar materias -->
+  <div id="materia-modal" class="editor-modal" style="display:none;">
+    <div class="editor-content">
+      <form id="materia-form" onsubmit="guardarMateria(event)">
+        <input type="hidden" id="materia-idx">
+        <label>Código:</label>
+        <input type="text" id="mat-codigo" required>
+        <label>Nombre:</label>
+        <input type="text" id="mat-nombre" required>
+        <label>Créditos:</label>
+        <input type="number" id="mat-creditos" min="1" required>
+        <label>Año:</label>
+        <select id="mat-anio"></select>
+        <label>Periodo:</label>
+        <select id="mat-periodo"></select>
+        <label>Categoría:</label>
+        <select id="mat-categoria"></select>
+        <div class="botonera">
+          <button type="submit">Guardar</button>
+          <button type="button" onclick="cerrarMateriaEditor()">Cancelar</button>
+          <button type="button" id="btn-borrar-materia" style="display:none;" onclick="borrarMateria()">Eliminar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal para editar categorías -->
+  <div id="categoria-modal" class="editor-modal" style="display:none;">
+    <div class="editor-content" id="categorias-editor"></div>
+  </div>
+
   <script>
-    // CATEGORÍAS: Edita los nombres y colores aquí
+    // --- ESTADO ---
     let categorias = {
       "Básica": "#fff9c4",
       "Matemática": "#ffe0b2",
@@ -108,9 +197,9 @@
       "Idioma": "#d1c4e9",
       "Otro": "#ffcdd2"
     };
-
-    // Ejemplo de materias (puedes agregar/editar aquí)
-    const materias = [
+    let anios = ["Año 1","Año 2","Año 3","Año 4","Año 5","Año 6"];
+    let periodos = ["I","III","V","VII","IX","XI"];
+    let materias = [
       // año, periodo, código, nombre, créditos, categoría
       [1, 1, "IVI1131", "Programación", 5, "Básica"],
       [1, 1, "QUI010", "Química y Sociedad", 5, "Básica"],
@@ -118,7 +207,6 @@
       [3, 5, "MEC220", "Mecánica de Fluidos Avanzadas", 5, "Ingeniería"],
       [4, 7, "MEC373", "Automatización y Neumática", 5, "Ingeniería"],
       [5, 9, "MEC397", "Seminario de Titulación", 13, "Ingeniería"],
-
       [1, 1, "MAT021", "Matemáticas I", 8, "Matemática"],
       [1, 1, "MAT022", "Matemáticas II", 8, "Matemática"],
       [2, 3, "FIS140", "Física General IV", 5, "Física"],
@@ -127,60 +215,150 @@
       [6, 11, "MEC5", "Electivo 5", 5, "Optativo"]
     ];
 
-    // Años y periodos
-    const anios = ["Año 1","Año 2","Año 3","Año 4","Año 5","Año 6"];
-    const periodos = ["I","III","V","VII","IX","XI"];
-
-    // Renderiza la malla curricular
+    // --- MALLA ---
     function renderMalla() {
       const malla = document.getElementById('malla');
       malla.innerHTML = "";
+      malla.style.gridTemplateColumns = `repeat(${anios.length}, 1fr)`;
 
-      // Añade cabeceras de año
+      // Cabeceras año
       for (let a = 0; a < anios.length; a++) {
         const div = document.createElement('div');
         div.className = 'anio';
         div.textContent = anios[a];
         malla.appendChild(div);
       }
-      // Añade cabeceras de periodo
-      for (let p = 0; p < periodos.length; p++) {
-        const div = document.createElement('div');
-        div.className = 'periodo';
-        div.textContent = periodos[p];
-        malla.appendChild(div);
-      }
-
-      // Añade materias
-      // Calcula la posición correcta: fila = periodo, columna = año
+      // Cabeceras periodo
       for (let p = 0; p < periodos.length; p++) {
         for (let a = 0; a < anios.length; a++) {
-          // Busca materia de este año y periodo
-          const mat = materias.find(m => m[0] === (a+1) && m[1] === (p+1));
-          if (mat) {
+          if (a === 0) {
             const div = document.createElement('div');
-            div.className = 'materia';
-            div.style.background = categorias[mat[5]] || "#e0e0e0";
-            div.innerHTML = `
-              <span class="codigo">${mat[2]}</span>
-              <span>${mat[3]}</span>
-              <span class="creditos">${mat[4]}</span>
-            `;
+            div.className = 'periodo';
+            div.textContent = periodos[p];
+            div.style.gridColumn = `span ${anios.length}`;
             malla.appendChild(div);
+            break;
+          }
+        }
+        // Materias fila por fila
+        for (let a = 0; a < anios.length; a++) {
+          // Puede haber más de una materia por celda
+          let mats = materias.filter(m => m[0] === (a+1) && m[1] === (p+1));
+          if (mats.length) {
+            // Si hay varias, renderiza todas apiladas
+            mats.forEach((mat, idx) => {
+              const div = document.createElement('div');
+              div.className = 'materia';
+              div.style.background = categorias[mat[5]] || "#e0e0e0";
+              div.innerHTML = `
+                <span class="codigo">${mat[2]}</span>
+                <span>${mat[3]}</span>
+                <span class="creditos">${mat[4]}</span>
+              `;
+              div.onclick = () => abrirMateriaEditor(materias.indexOf(mat));
+              malla.appendChild(div);
+            });
           } else {
-            // Celda vacía
+            // Celda vacía, permite agregar materia
             const div = document.createElement('div');
-            div.innerHTML = "&nbsp;";
+            div.innerHTML = '<span style="color:#bbb;font-size:1.2em;cursor:pointer;" title="Agregar materia" onclick="abrirMateriaEditor(null,'+(a+1)+','+(p+1)+')">+</span>';
+            div.style.textAlign = "center";
+            div.style.minHeight = "90px";
             malla.appendChild(div);
           }
         }
       }
     }
 
-    // Editor de categorías
+    // --- MODAL DE MATERIAS ---
+    function abrirMateriaEditor(idx=null, anioSel=null, periodoSel=null) {
+      document.getElementById('materia-modal').style.display = "";
+      // Actualiza selectores
+      let sa = document.getElementById('mat-anio');
+      let sp = document.getElementById('mat-periodo');
+      sa.innerHTML = ""; sp.innerHTML = "";
+      for(let i=0;i<anios.length;i++){
+        let opt = document.createElement('option');
+        opt.value = i+1; opt.textContent = anios[i];
+        sa.appendChild(opt);
+      }
+      for(let i=0;i<periodos.length;i++){
+        let opt = document.createElement('option');
+        opt.value = i+1; opt.textContent = periodos[i];
+        sp.appendChild(opt);
+      }
+      // Categorias
+      let sc = document.getElementById('mat-categoria');
+      sc.innerHTML = "";
+      Object.keys(categorias).forEach(cat=>{
+        let opt = document.createElement('option');
+        opt.value=cat; opt.textContent=cat;
+        sc.appendChild(opt);
+      });
+      // Si es edición
+      if(idx!==null){
+        let m = materias[idx];
+        document.getElementById('materia-idx').value = idx;
+        document.getElementById('mat-codigo').value = m[2];
+        document.getElementById('mat-nombre').value = m[3];
+        document.getElementById('mat-creditos').value = m[4];
+        sa.value = m[0];
+        sp.value = m[1];
+        sc.value = m[5];
+        document.getElementById('btn-borrar-materia').style.display = "";
+      } else {
+        document.getElementById('materia-idx').value = "";
+        document.getElementById('mat-codigo').value = "";
+        document.getElementById('mat-nombre').value = "";
+        document.getElementById('mat-creditos').value = 5;
+        sa.value = anioSel || 1;
+        sp.value = periodoSel || 1;
+        sc.value = Object.keys(categorias)[0];
+        document.getElementById('btn-borrar-materia').style.display = "none";
+      }
+    }
+    function cerrarMateriaEditor(){
+      document.getElementById('materia-modal').style.display = "none";
+    }
+    function guardarMateria(e){
+      e.preventDefault();
+      let idx = document.getElementById('materia-idx').value;
+      let mat = [
+        parseInt(document.getElementById('mat-anio').value),
+        parseInt(document.getElementById('mat-periodo').value),
+        document.getElementById('mat-codigo').value.trim(),
+        document.getElementById('mat-nombre').value.trim(),
+        parseInt(document.getElementById('mat-creditos').value),
+        document.getElementById('mat-categoria').value
+      ];
+      if(idx!==""){
+        materias[idx]=mat;
+      }else{
+        materias.push(mat);
+      }
+      cerrarMateriaEditor();
+      renderMalla();
+    }
+    function borrarMateria(){
+      let idx = document.getElementById('materia-idx').value;
+      if(confirm("¿Eliminar esta materia?")){
+        materias.splice(idx,1);
+        cerrarMateriaEditor();
+        renderMalla();
+      }
+    }
+
+    // --- MODAL DE CATEGORIAS ---
+    function abrirCategoriaEditor(){
+      document.getElementById('categoria-modal').style.display = "";
+      renderCategoriasEditor();
+    }
+    function cerrarCategoriaEditor(){
+      document.getElementById('categoria-modal').style.display = "none";
+    }
     function renderCategoriasEditor() {
       const container = document.getElementById('categorias-editor');
-      container.innerHTML = '';
+      container.innerHTML = '<h2>Categorías</h2>';
       Object.keys(categorias).forEach(cat => {
         const wrapper = document.createElement('div');
         wrapper.style.marginBottom = "10px";
@@ -204,7 +382,7 @@
         nameInput.style.marginRight = "10px";
         nameInput.onchange = (e) => {
           const nuevo = e.target.value.trim();
-          if (nuevo && nuevo !== cat) {
+          if (nuevo && nuevo !== cat && !(nuevo in categorias)) {
             categorias[nuevo] = categorias[cat];
             delete categorias[cat];
             // Cambia nombre en las materias
@@ -245,10 +423,41 @@
         }
       };
       container.appendChild(addBtn);
+
+      // Botón cerrar
+      const closeBtn = document.createElement('button');
+      closeBtn.textContent = "Cerrar";
+      closeBtn.style.marginLeft = "20px";
+      closeBtn.onclick = cerrarCategoriaEditor;
+      container.appendChild(closeBtn);
     }
 
-    renderCategoriasEditor();
+    // --- AGREGAR AÑO / PERIODO ---
+    function agregarAnio() {
+      const nombre = prompt("Nombre del nuevo año:", "Año " + (anios.length + 1));
+      if (nombre) {
+        anios.push(nombre);
+        renderMalla();
+      }
+    }
+    function agregarPeriodo() {
+      const nombre = prompt("Nombre del nuevo periodo:", "");
+      if (nombre) {
+        periodos.push(nombre);
+        renderMalla();
+      }
+    }
+
+    // --- INICIO ---
     renderMalla();
+
+    // Permitir cerrar modales haciendo click fuera
+    window.onclick = function(e){
+      if(e.target.classList && e.target.classList.contains("editor-modal")){
+        cerrarMateriaEditor();
+        cerrarCategoriaEditor();
+      }
+    }
   </script>
 </body>
 </html>
