@@ -1,19 +1,254 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Malla Curricular - Columnas por Año</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <title>Malla Curricular Editable</title>
+  <style>
+    body {
+      background: #f5f5f5;
+      font-family: Arial, sans-serif;
+      color: #111;
+    }
+    .malla {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      grid-gap: 8px;
+      margin: 30px auto;
+      max-width: 1200px;
+    }
+    .anio, .periodo {
+      background: #cfcfcf;
+      text-align: center;
+      padding: 12px 0 8px 0;
+      font-size: 1.1em;
+      font-weight: bold;
+      border-radius: 7px 7px 0 0;
+      color: #111;
+    }
+    .periodo {
+      background: #e5e5e5;
+      border-bottom: 1px solid #bbb;
+      border-radius: 0;
+      font-size: 1em;
+      padding: 8px 0 6px 0;
+    }
+    .materia {
+      border-radius: 10px;
+      padding: 10px 8px 8px 8px;
+      margin-bottom: 3px;
+      min-height: 90px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-size: 0.95em;
+      color: #111 !important;
+      border: 2px solid #ddd;
+      box-shadow: 0 2px 8px #0001;
+      transition: background 0.3s;
+    }
+    .codigo {
+      font-size: 0.85em;
+      font-weight: bold;
+      margin-bottom: 2px;
+      color: #111;
+    }
+    .creditos {
+      position: absolute;
+      bottom: 8px;
+      right: 12px;
+      background: #fffde7;
+      color: #111;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      font-size: 0.95em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #bdbdbd;
+      box-shadow: 0 1px 3px #0001;
+    }
+    .materia span {
+      display: block;
+    }
+    /* Responsive */
+    @media (max-width: 900px) {
+      .malla { grid-template-columns: repeat(2, 1fr);}
+    }
+    /* Paleta de colores de ejemplo para el selector de categorías */
+    .color-option {
+      display: inline-block;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      margin-right: 6px;
+      border: 1px solid #bbb;
+      vertical-align: middle;
+    }
+  </style>
 </head>
 <body>
-    <h1>Malla Interactiva por Años (Columnas)</h1>
-    <div id="controls">
-        <button onclick="addYear()">➕ Agregar Año</button>
-        <button onclick="resetMalla()">🗑️ Reiniciar Malla</button>
-    </div>
-    <div id="malla" class="grid-container"></div>
-    <script src="materias.js"></script>
-    <script src="app.js"></script>
+  <h1 style="text-align:center; color:#111;">Malla Curricular Editable</h1>
+  <div style="max-width:1200px;margin:auto;">
+    <h3>Editar categorías:</h3>
+    <div id="categorias-editor"></div>
+    <hr>
+    <div class="malla" id="malla"></div>
+  </div>
+  <script>
+    // CATEGORÍAS: Edita los nombres y colores aquí
+    let categorias = {
+      "Básica": "#fff9c4",
+      "Matemática": "#ffe0b2",
+      "Física": "#b2ebf2",
+      "Ingeniería": "#c8e6c9",
+      "Optativo": "#f8bbd0",
+      "Humanista": "#d7ccc8",
+      "Idioma": "#d1c4e9",
+      "Otro": "#ffcdd2"
+    };
+
+    // Ejemplo de materias (puedes agregar/editar aquí)
+    const materias = [
+      // año, periodo, código, nombre, créditos, categoría
+      [1, 1, "IVI1131", "Programación", 5, "Básica"],
+      [1, 1, "QUI010", "Química y Sociedad", 5, "Básica"],
+      [2, 3, "MAT035", "Probabilidad y Estadística", 7, "Matemática"],
+      [3, 5, "MEC220", "Mecánica de Fluidos Avanzadas", 5, "Ingeniería"],
+      [4, 7, "MEC373", "Automatización y Neumática", 5, "Ingeniería"],
+      [5, 9, "MEC397", "Seminario de Titulación", 13, "Ingeniería"],
+
+      [1, 1, "MAT021", "Matemáticas I", 8, "Matemática"],
+      [1, 1, "MAT022", "Matemáticas II", 8, "Matemática"],
+      [2, 3, "FIS140", "Física General IV", 5, "Física"],
+      [3, 5, "MEC353", "Mecánica de Máquinas", 5, "Ingeniería"],
+      [4, 7, "MEC382", "Ingeniería del Mantenimiento", 5, "Ingeniería"],
+      [6, 11, "MEC5", "Electivo 5", 5, "Optativo"]
+    ];
+
+    // Años y periodos
+    const anios = ["Año 1","Año 2","Año 3","Año 4","Año 5","Año 6"];
+    const periodos = ["I","III","V","VII","IX","XI"];
+
+    // Renderiza la malla curricular
+    function renderMalla() {
+      const malla = document.getElementById('malla');
+      malla.innerHTML = "";
+
+      // Añade cabeceras de año
+      for (let a = 0; a < anios.length; a++) {
+        const div = document.createElement('div');
+        div.className = 'anio';
+        div.textContent = anios[a];
+        malla.appendChild(div);
+      }
+      // Añade cabeceras de periodo
+      for (let p = 0; p < periodos.length; p++) {
+        const div = document.createElement('div');
+        div.className = 'periodo';
+        div.textContent = periodos[p];
+        malla.appendChild(div);
+      }
+
+      // Añade materias
+      // Calcula la posición correcta: fila = periodo, columna = año
+      for (let p = 0; p < periodos.length; p++) {
+        for (let a = 0; a < anios.length; a++) {
+          // Busca materia de este año y periodo
+          const mat = materias.find(m => m[0] === (a+1) && m[1] === (p+1));
+          if (mat) {
+            const div = document.createElement('div');
+            div.className = 'materia';
+            div.style.background = categorias[mat[5]] || "#e0e0e0";
+            div.innerHTML = `
+              <span class="codigo">${mat[2]}</span>
+              <span>${mat[3]}</span>
+              <span class="creditos">${mat[4]}</span>
+            `;
+            malla.appendChild(div);
+          } else {
+            // Celda vacía
+            const div = document.createElement('div');
+            div.innerHTML = "&nbsp;";
+            malla.appendChild(div);
+          }
+        }
+      }
+    }
+
+    // Editor de categorías
+    function renderCategoriasEditor() {
+      const container = document.getElementById('categorias-editor');
+      container.innerHTML = '';
+      Object.keys(categorias).forEach(cat => {
+        const wrapper = document.createElement('div');
+        wrapper.style.marginBottom = "10px";
+        wrapper.style.display = "flex";
+        wrapper.style.alignItems = "center";
+
+        // Color input
+        const colorInput = document.createElement('input');
+        colorInput.type = "color";
+        colorInput.value = categorias[cat];
+        colorInput.style.marginRight = "10px";
+        colorInput.oninput = (e) => {
+          categorias[cat] = e.target.value;
+          renderMalla();
+        };
+
+        // Nombre input
+        const nameInput = document.createElement('input');
+        nameInput.type = "text";
+        nameInput.value = cat;
+        nameInput.style.marginRight = "10px";
+        nameInput.onchange = (e) => {
+          const nuevo = e.target.value.trim();
+          if (nuevo && nuevo !== cat) {
+            categorias[nuevo] = categorias[cat];
+            delete categorias[cat];
+            // Cambia nombre en las materias
+            materias.forEach(m => { if (m[5] === cat) m[5] = nuevo; });
+            renderCategoriasEditor();
+            renderMalla();
+          }
+        };
+
+        // Botón eliminar
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = "Eliminar";
+        deleteBtn.style.marginLeft = "10px";
+        deleteBtn.onclick = () => {
+          if (confirm("¿Eliminar la categoría '" + cat + "'? Las materias que la usen quedarán grises.")) {
+            delete categorias[cat];
+            renderCategoriasEditor();
+            renderMalla();
+          }
+        };
+
+        wrapper.appendChild(colorInput);
+        wrapper.appendChild(nameInput);
+        wrapper.appendChild(deleteBtn);
+        container.appendChild(wrapper);
+      });
+
+      // Añadir nueva categoría
+      const addBtn = document.createElement('button');
+      addBtn.textContent = "Añadir nueva categoría";
+      addBtn.onclick = () => {
+        const nombre = prompt("Nombre de la nueva categoría:");
+        if (nombre && !(nombre in categorias)) {
+          const color = prompt("Color en formato HEX (ej: #aabbcc):", "#ffffff");
+          categorias[nombre] = color || "#ffffff";
+          renderCategoriasEditor();
+          renderMalla();
+        }
+      };
+      container.appendChild(addBtn);
+    }
+
+    renderCategoriasEditor();
+    renderMalla();
+  </script>
 </body>
 </html>
