@@ -14,6 +14,20 @@
       background-position: center;
       transition: background-image 0.5s;
     }
+    body.bg-custom {
+      background: none !important;
+      background-image: none !important;
+    }
+    #bg-custom-img {
+      position: fixed;
+      left: 0; top: 0;
+      width: 100vw; height: 100vh;
+      z-index: -1;
+      pointer-events: none;
+      object-fit: cover;
+      transition: transform 0.3s, object-fit 0.3s, opacity 0.3s;
+      opacity: 0.55;
+    }
     #bienvenida {
       position: fixed;
       z-index: 9999;
@@ -100,7 +114,7 @@
     }
     .bg-controls label { font-weight: bold; }
     .bg-controls input[type="text"] {
-      width: 280px;
+      width: 200px;
       max-width: 55vw;
       padding: 4px;
       border-radius: 5px;
@@ -109,7 +123,8 @@
     .bg-controls input[type="file"] {
       border: none;
     }
-    .bg-controls button {
+    .bg-controls button,
+    .bg-controls select {
       background: #fff;
       border: 1px solid #bbb;
       border-radius: 4px;
@@ -140,6 +155,40 @@
     }
     .borrar-todo-btn:hover {
       background: #ff0000;
+    }
+    .buscador-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      gap: 8px;
+    }
+    .buscador-input {
+      font-size: 1em;
+      padding: 7px 12px;
+      border-radius: 8px;
+      border: 1px solid #bbb;
+      width: 210px;
+      max-width: 60vw;
+    }
+    .buscador-icono {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: 0 2px 8px #0001;
+      border: 1px solid #ddd;
+      margin-left: 6px;
+    }
+    .buscador-icono img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
     }
     .malla {
       display: grid;
@@ -361,6 +410,7 @@
   </style>
 </head>
 <body>
+  <img id="bg-custom-img" style="display:none;" />
   <!-- Pantalla de bienvenida -->
   <div id="bienvenida">
     <img 
@@ -381,10 +431,32 @@
   <div class="bg-controls">
     <label>Imagen de fondo:</label>
     <input type="file" id="bg-file" accept="image/*">
-    <span>ó URL:</span>
-    <input type="text" id="bg-url" placeholder="https://...jpg">
+    <span>ó URL/GIF:</span>
+    <input type="text" id="bg-url" placeholder="https://...jpg/gif">
+    <label>Rotar:</label>
+    <select id="bg-rotate" onchange="actualizarBgCustom()">
+      <option value="0">0°</option>
+      <option value="90">90°</option>
+      <option value="180">180°</option>
+      <option value="270">270°</option>
+    </select>
+    <label>Ajuste:</label>
+    <select id="bg-fit" onchange="actualizarBgCustom()">
+      <option value="cover">Cubrir</option>
+      <option value="contain">Contener</option>
+      <option value="auto">Auto</option>
+      <option value="repeat">Repetir</option>
+      <option value="no-repeat">No repetir</option>
+    </select>
     <button onclick="aplicarFondo()">Aplicar</button>
     <button onclick="quitarFondo()">Sin fondo</button>
+  </div>
+  <div class="buscador-container">
+    <input class="buscador-input" id="buscador-materia" type="text" placeholder="Buscar materia..." oninput="filtrarMaterias()">
+    <span class="buscador-icono">
+      <!-- Imagen chibi anime, usando el enlace de Pinterest -->
+      <img src="https://i.pinimg.com/originals/0e/3f/8c/0e3f8c7b9d9d1bfa1d2c2b46c824d2c0.png" alt="Chibi buscador" title="Buscar">
+    </span>
   </div>
   <div style="max-width:1200px;margin:auto;">
     <div class="acciones-malla">
@@ -443,11 +515,14 @@
     let materias = [];
     let aprobadas = {};
 
+    let bgCustomData = null; // {src, fit, rotate}
+    let filtroBuscador = "";
+
     // --- LOCALSTORAGE ---
     function guardarEstado() {
       localStorage.setItem('malla_materias', JSON.stringify(materias));
       localStorage.setItem('malla_titulo', document.getElementById('titulo-malla').textContent);
-      localStorage.setItem('malla_bg_url', document.body.style.backgroundImage);
+      localStorage.setItem('malla_bg_custom', JSON.stringify(bgCustomData));
       localStorage.setItem('malla_anios', JSON.stringify(anios));
       localStorage.setItem('malla_aprobadas', JSON.stringify(aprobadas));
       localStorage.setItem('malla_categorias', JSON.stringify(categorias));
@@ -457,8 +532,11 @@
       if (mallas) materias = JSON.parse(mallas);
       let titulo = localStorage.getItem('malla_titulo');
       if (titulo) document.getElementById('titulo-malla').textContent = titulo;
-      let fondo = localStorage.getItem('malla_bg_url');
-      if (fondo) document.body.style.backgroundImage = fondo;
+      let bgc = localStorage.getItem('malla_bg_custom');
+      if (bgc) {
+        bgCustomData = JSON.parse(bgc);
+        ponerBgCustom(bgCustomData);
+      }
       let aniosLS = localStorage.getItem('malla_anios');
       if (aniosLS) anios = JSON.parse(aniosLS);
       let aprobadasLS = localStorage.getItem('malla_aprobadas');
@@ -472,12 +550,23 @@
       renderMalla();
     }
 
+    // --- BUSCADOR ---
+    function filtrarMaterias() {
+      filtroBuscador = document.getElementById('buscador-materia').value.trim().toLowerCase();
+      renderMalla();
+    }
+
     // --- MALLA ---
     function renderMalla() {
       const malla = document.getElementById('malla');
       malla.innerHTML = "";
 
-      let materiasPorAnio = anios.map((_, i) => materias.filter(m => m[0] === (i + 1)));
+      // Filtrar materias si hay búsqueda
+      let materiasFiltradas = filtroBuscador
+        ? materias.filter(m => m[2].toLowerCase().includes(filtroBuscador) || m[1].toLowerCase().includes(filtroBuscador))
+        : materias;
+
+      let materiasPorAnio = anios.map((_, i) => materiasFiltradas.filter(m => m[0] === (i + 1)));
       let maxMaterias = Math.max(...materiasPorAnio.map(arr => arr.length), 1);
 
       // Definir columnas
@@ -542,13 +631,15 @@
             malla.appendChild(div);
           } else {
             // Botón "Agregar materia"
-            const div = document.createElement('div');
-            div.className = "agregar-mat-btn";
-            div.innerHTML = `<span title="Agregar materia" onclick="abrirMateriaEditor(null,${a + 1})">+</span>`;
-            div.onclick = (ev) => { abrirMateriaEditor(null, a + 1); };
-            div.style.gridRow = (fila + 2);
-            div.style.gridColumn = (a + 1);
-            malla.appendChild(div);
+            if (!filtroBuscador) { // solo si no hay filtro de búsqueda
+              const div = document.createElement('div');
+              div.className = "agregar-mat-btn";
+              div.innerHTML = `<span title="Agregar materia" onclick="abrirMateriaEditor(null,${a + 1})">+</span>`;
+              div.onclick = (ev) => { abrirMateriaEditor(null, a + 1); };
+              div.style.gridRow = (fila + 2);
+              div.style.gridColumn = (a + 1);
+              malla.appendChild(div);
+            }
           }
         }
       }
@@ -766,27 +857,77 @@
       if (e.key === "Enter" || e.key === "Escape") this.blur();
     });
 
-    // FONDO: URL o archivo
+    // FONDO: URL o archivo + opciones
     function aplicarFondo() {
       let url = document.getElementById('bg-url').value.trim();
       let file = document.getElementById('bg-file').files[0];
+      let fit = document.getElementById('bg-fit').value;
+      let rotate = parseInt(document.getElementById('bg-rotate').value, 10) || 0;
+
       if (file) {
         let reader = new FileReader();
         reader.onload = function (e) {
-          document.body.style.backgroundImage = `url('${e.target.result}')`;
-          localStorage.setItem('malla_bg_url', `url('${e.target.result}')`);
+          bgCustomData = { src: e.target.result, fit, rotate };
+          ponerBgCustom(bgCustomData);
+          guardarYActualizar();
         };
         reader.readAsDataURL(file);
       } else if (url) {
-        document.body.style.backgroundImage = `url('${url}')`;
-        localStorage.setItem('malla_bg_url', `url('${url}')`);
+        bgCustomData = { src: url, fit, rotate };
+        ponerBgCustom(bgCustomData);
+        guardarYActualizar();
       }
     }
+    function ponerBgCustom(data) {
+      // Usar imagen/gif como elemento <img> superpuesto
+      document.body.classList.add('bg-custom');
+      let el = document.getElementById('bg-custom-img');
+      el.style.display = '';
+      el.src = data.src;
+      el.style.objectFit = (data.fit === "repeat" || data.fit === "no-repeat") ? "none" : data.fit;
+      el.style.transform = `rotate(${data.rotate}deg)`;
+      el.style.opacity = 0.55;
+
+      // Repetir fondo usando CSS si se pide
+      if (data.fit === "repeat") {
+        el.style.width = "auto";
+        el.style.height = "auto";
+        el.style.left = "0";
+        el.style.top = "0";
+        el.style.background = `url('${data.src}') repeat`;
+        el.style.backgroundSize = "auto";
+        el.style.objectFit = "none";
+      } else if (data.fit === "no-repeat") {
+        el.style.background = `url('${data.src}') no-repeat center center`;
+        el.style.backgroundSize = "auto";
+        el.style.width = "100vw";
+        el.style.height = "100vh";
+        el.style.left = "0";
+        el.style.top = "0";
+      } else {
+        el.style.background = "";
+        el.style.width = "100vw";
+        el.style.height = "100vh";
+        el.style.left = "0";
+        el.style.top = "0";
+      }
+    }
+    function actualizarBgCustom() {
+      if (!bgCustomData) return;
+      let fit = document.getElementById('bg-fit').value;
+      let rotate = parseInt(document.getElementById('bg-rotate').value, 10) || 0;
+      bgCustomData.fit = fit;
+      bgCustomData.rotate = rotate;
+      ponerBgCustom(bgCustomData);
+      guardarYActualizar();
+    }
     function quitarFondo() {
-      document.body.style.backgroundImage = '';
+      document.body.classList.remove('bg-custom');
+      document.getElementById('bg-custom-img').style.display = 'none';
       document.getElementById('bg-url').value = '';
       document.getElementById('bg-file').value = '';
-      localStorage.removeItem('malla_bg_url');
+      bgCustomData = null;
+      localStorage.removeItem('malla_bg_custom');
     }
 
     window.onload = cargarEstado;
